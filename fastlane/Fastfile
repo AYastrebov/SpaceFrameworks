@@ -26,6 +26,8 @@ platform :ios do
     build_asyncdisplaykit()
     build_other()
 
+    generate_manifest()
+
     Dir.chdir("..") do
       matching_files = Dir.glob('archives')
       FileUtils.rm_rf(*matching_files)
@@ -61,6 +63,16 @@ platform :ios do
     build_xcframework(
       workspace: "SpaceFrameworks.xcworkspace",
       scheme: "DeepLinkKit"
+    )
+
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "Lottie_iOS"
+    )
+
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "LoremSwiftum-iOS"
     )
   end
 
@@ -151,11 +163,16 @@ platform :ios do
 
     xcframework_path = "xcframeworks/#{scheme}.xcframework"
 
+    simulator_archive = "archives/#{scheme}-simulator.xcarchive"
+    device_archive = "archives/#{scheme}-iOS.xcarchive"
+
+    simulator_framework = Dir.entries("../#{simulator_archive}/Products/Library/Frameworks").select { |i| i.end_with?(".framework") }.first
+    device_framework = Dir.entries("../#{device_archive}/Products/Library/Frameworks").select { |i| i.end_with?(".framework") }.first
+
     create_xcframework(
       frameworks: [
-        "archives/#{scheme}-simulator.xcarchive/Products/Library/Frameworks/#{scheme}.framework", 
-        "archives/#{scheme}-iOS.xcarchive/Products/Library/Frameworks/#{scheme}.framework"
-      ], 
+        "#{simulator_archive}/Products/Library/Frameworks/#{simulator_framework}", 
+        "#{device_archive}/Products/Library/Frameworks/#{device_framework}"], 
       output: xcframework_path
     )
 
@@ -168,11 +185,71 @@ platform :ios do
       matching_files = Dir.glob(xcframework_path)
       FileUtils.rm_rf(*matching_files)
       UI.message "Deleted xcframework: #{matching_files.join(", ")}"
+    end
 
-      checksum = sh("swift package compute-checksum #{xcframework_path}.zip")
-      md5_filename = "xcframeworks/#{scheme}.md5"
+  end
 
-      File.open(md5_filename, 'w') { |file| file.puts checksum }
+  desc "Generate Package.swift"
+  private_lane :generate_manifest do
+
+    manifest_filename = 'Package.swift'
+    file_content = '''
+// swift-tools-version:5.3
+// The swift-tools-version declares the minimum version of Swift required to build this package.
+
+import PackageDescription
+
+let package = Package(
+    name: "SpaceFrameworks",
+    platforms: [.iOS(.v11)],
+    products: [
+      // Products define the executables and libraries a package produces, and make them visible to other packages.
+      .library(
+          name: "Texture",
+          targets: ["AsyncDisplayKit"]
+      ),
+      .library(
+          name: "IGListKit",
+          targets: ["IGListKit", "IGListSwiftKit", "IGListDiffKit"]
+      ),
+      .library(
+          name: "Markdown",
+          targets: ["libcmark_gfm", "Maaku"]
+      ),
+      .library(
+          name: "PINRemoteImage",
+          targets: ["PINRemoteImage", "libwebp", "PINCache", "PINOperation"]
+      ),
+      .library(
+          name: "XCoordinator",
+          targets: ["XCoordinator"]
+      ),
+      .library(
+          name: "DeepLinkKit",
+          targets: ["DeepLinkKit"]
+      ),
+      .library(
+          name: "Lottie",
+          targets: ["Lottie"]
+      ),
+      .library(
+          name: "LoremSwiftum",
+          targets: ["LoremSwiftum"]
+      ),
+    ],
+    dependencies: [
+      // Dependencies declare other packages that this package depends on.
+      // .package(url: /* package url */, from: "1.0.0"),
+    ],
+    targets: []
+)
+'''
+
+    Dir.chdir("..") do
+      Dir.entries("xcframeworks").select { |i| i.end_with?(".zip") }.map{ |framework|
+        path = "xcframeworks/#{framework}"
+        checksum = sh("swift package compute-checksum #{path}")
+      }
     end
 
   end
