@@ -1,6 +1,4 @@
 github "ptmt/Texture" "space_ext"
 github "AYastrebov/Maaku" "space_ext"
 github "button/DeepLinkKit" "master"
-## ONLY FOR PLATFORM UI
-github "lukaskubanek/LoremSwiftum"
 github "AYastrebov/XCoordinator" "space"

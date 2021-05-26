@@ -31,7 +31,4 @@
    <FileRef
       location = "group:Carthage/Checkouts/Maaku/Maaku.xcodeproj">
    </FileRef>
-   <FileRef
-      location = "group:Carthage/Checkouts/LoremSwiftum/LoremSwiftum.xcodeproj">
-   </FileRef>
 </Workspace>
