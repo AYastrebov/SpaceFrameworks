@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:Carthage/Checkouts/Texture/AsyncDisplayKit.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Carthage/Checkouts/IGListKit/IGListKit.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Carthage/Checkouts/libwebp-Xcode/libwebp.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Carthage/Checkouts/PINOperation/PINOperation.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Carthage/Checkouts/PINCache/PINCache.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Carthage/Checkouts/PINRemoteImage/PINRemoteImage.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Carthage/Checkouts/XCoordinator/XCoordinator.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Carthage/Checkouts/DeepLinkKit/DeepLinkKit.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Carthage/Checkouts/libcmark_gfm/libcmark_gfm.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Carthage/Checkouts/Maaku/Maaku.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Carthage/Checkouts/LoremSwiftum/LoremSwiftum.xcodeproj">
+   </FileRef>
+</Workspace>

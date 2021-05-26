@@ -1,0 +1,184 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Build Frameworks"
+  lane :build_frameworks do
+
+    checkout()
+
+    build_iglistkit()
+    build_pinremoteimage()
+    build_asyncdisplaykit()
+    build_other()
+
+    Dir.chdir("..") do
+      matching_files = Dir.glob('archives')
+      FileUtils.rm_rf(*matching_files)
+      UI.message "Deleted archives: #{matching_files.join(", ")}"
+    end
+
+  end
+
+  desc "Checkout dependencies"
+  private_lane :checkout do 
+    Dir.chdir("..") do
+      sh("carthage checkout")
+    end
+  end
+
+  desc "Build Other Dependencies"
+  private_lane :build_other do 
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "libcmark_gfm"
+    )
+
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "Maaku"
+    )
+
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "XCoordinator"
+    )
+
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "DeepLinkKit"
+    )
+
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "LoremSwiftum"
+    )
+  end
+
+  desc "Build AsyncDisplayKit"
+  private_lane :build_asyncdisplaykit do 
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "AsyncDisplayKit"
+    )
+  end
+
+  desc "Build IGListKit"
+  private_lane :build_iglistkit do 
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "IGListDiffKit"
+    )
+
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "IGListKit"
+    )
+
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "IGListSwiftKit"
+    )
+  end
+
+  desc "Build PINRemoteImage"
+  private_lane :build_pinremoteimage do
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "libwebp"
+    )
+
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "PINOperation"
+    )
+
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "PINCache"
+    )
+
+    build_xcframework(
+      workspace: "SpaceFrameworks.xcworkspace",
+      scheme: "PINRemoteImage"
+    )
+  end
+
+  desc "Build XCFramework"
+  private_lane :build_xcframework do |options|
+    worspace = options[:workspace]
+    scheme = options[:scheme]
+    build_settings = [["SKIP_INSTALL", "NO"], ["BUILD_LIBRARY_FOR_DISTRIBUTION", "YES"]]
+
+    xcodebuild(
+      workspace: worspace,
+      scheme: scheme,
+      archive: true,
+      xcargs: "-sdk iphonesimulator",
+      build_settings: build_settings,
+      destination: "generic/platform=iOS Simulator",
+      archive_path: "archives/#{scheme}-iOSSim.xcarchive"
+    )
+
+    xcodebuild(
+      workspace: worspace,
+      scheme: scheme,
+      archive: true,
+      xcargs: "-sdk iphoneos",
+      build_settings: build_settings,
+      destination: "generic/platform=iOS",
+      archive_path: "archives/#{scheme}-iOS.xcarchive"
+    )
+
+    # xcodebuild(
+    #   workspace: worspace,
+    #   scheme: scheme,
+    #   archive: true,
+    #   xcargs: "-sdk macosx",
+    #   build_settings: build_settings,
+    #   destination: "platform=macOS,arch=x86_64,variant=Mac Catalyst",
+    #   archive_path: "archives/#{scheme}-macCatalyst.xcarchive"
+    # )
+
+    xcframework_path = "xcframeworks/#{scheme}.xcframework"
+
+    create_xcframework(
+      frameworks: [
+        "archives/#{scheme}-iOSSim.xcarchive/Products/Library/Frameworks/#{scheme}.framework", 
+        "archives/#{scheme}-iOS.xcarchive/Products/Library/Frameworks/#{scheme}.framework"
+      ], 
+      output: xcframework_path
+    )
+
+    zip(
+      path: xcframework_path,
+      output_path: "#{xcframework_path}.zip"
+    )
+
+    Dir.chdir("..") do
+      matching_files = Dir.glob(xcframework_path)
+      FileUtils.rm_rf(*matching_files)
+      UI.message "Deleted xcframework: #{matching_files.join(", ")}"
+
+      checksum = sh("swift package compute-checksum #{xcframework_path}.zip")
+      md5_filename = "xcframeworks/#{scheme}.md5"
+
+      File.open(md5_filename, 'w') { |file| file.puts checksum }
+    end
+
+  end
+end
