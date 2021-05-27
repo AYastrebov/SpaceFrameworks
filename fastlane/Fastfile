@@ -161,13 +161,14 @@ platform :ios do
     #   archive_path: "archives/#{scheme}-macCatalyst.xcarchive"
     # )
 
-    xcframework_path = "xcframeworks/#{scheme}.xcframework"
-
     simulator_archive = "archives/#{scheme}-simulator.xcarchive"
     device_archive = "archives/#{scheme}-iOS.xcarchive"
 
     simulator_framework = Dir.entries("../#{simulator_archive}/Products/Library/Frameworks").select { |i| i.end_with?(".framework") }.first
     device_framework = Dir.entries("../#{device_archive}/Products/Library/Frameworks").select { |i| i.end_with?(".framework") }.first
+
+    xcframework_name = simulator_framework.sub(".framework", ".xcframework")
+    xcframework_path = "xcframeworks/#{xcframework_name}"
 
     create_xcframework(
       frameworks: [
@@ -175,17 +176,6 @@ platform :ios do
         "#{device_archive}/Products/Library/Frameworks/#{device_framework}"], 
       output: xcframework_path
     )
-
-    zip(
-      path: xcframework_path,
-      output_path: "#{xcframework_path}.zip"
-    )
-
-    Dir.chdir("..") do
-      matching_files = Dir.glob(xcframework_path)
-      FileUtils.rm_rf(*matching_files)
-      UI.message "Deleted xcframework: #{matching_files.join(", ")}"
-    end
 
   end
 
@@ -246,10 +236,30 @@ let package = Package(
 '''
 
     Dir.chdir("..") do
-      Dir.entries("xcframeworks").select { |i| i.end_with?(".zip") }.map{ |framework|
+      targets_content = ""
+      Dir.entries("xcframeworks").select { |i| i.end_with?(".xcframework") }.map{ |framework|
         path = "xcframeworks/#{framework}"
-        checksum = sh("swift package compute-checksum #{path}")
+        target = <<-eos
+          .binaryTarget(
+              name: #{framework.split('.framework').first},
+              path: #{path}
+          ), 
+      eos
+        unless targets_content.empty?
+          targets_content << "\n"
+        end
+        targets_content << "#{target}"
       }
+
+      targets = <<-eos
+targets: [
+#{targets_content}
+    ]
+      eos
+
+      file_content = file_content.sub('targets: []', targets)
+
+      File.open(manifest_filename, 'w') { |file| file.puts file_content }
     end
 
   end
